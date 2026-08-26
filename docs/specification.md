@@ -1,0 +1,119 @@
+# Runmark Specification (v1.0)
+
+## 1. Data Model Specification
+
+A Runmark representation encapsulates the runnable conditions of a project codebase.
+
+### Top-Level State (`RunmarkState`)
+```json
+{
+  "runmark": {
+    "id": "snap_01HXYZ789...",
+    "created_at": "2026-08-15T12:00:00Z",
+    "tool_version": "0.1.0",
+    "schema_version": "1.0",
+    "environment_fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "message": "Baseline working state"
+  },
+  "project": {
+    "name": "my-service",
+    "root": "/path/to/project",
+    "languages": ["python", "javascript"],
+    "frameworks": ["django", "react"],
+    "package_managers": ["uv", "pnpm"],
+    "containerization": ["docker", "compose"]
+  },
+  "git": {
+    "is_repository": true,
+    "branch": "main",
+    "commit": "a81f29c0f",
+    "dirty": false
+  },
+  "system": {
+    "os_name": "Windows",
+    "os_version": "11.0.22631",
+    "architecture": "AMD64"
+  },
+  "runtimes": {
+    "python": {
+      "name": "python",
+      "installed": true,
+      "version": "3.12.4",
+      "status": "detected",
+      "executable_path": null
+    }
+  },
+  "dependencies": [
+    {
+      "name": "django",
+      "manager": "uv",
+      "declared": ">=5.0",
+      "resolved": "5.0.6",
+      "kind": "direct"
+    }
+  ],
+  "services": [
+    {
+      "name": "postgresql",
+      "installed": true,
+      "running": true,
+      "detected_version": "16.3",
+      "expected_version": "16",
+      "status": "detected",
+      "port": 5432
+    }
+  ],
+  "environment": {
+    "variables": {
+      "DATABASE_URL": {
+        "name": "DATABASE_URL",
+        "required": true,
+        "present": true,
+        "secret": true,
+        "source": ".env.example"
+      }
+    }
+  },
+  "network": [
+    {
+      "port": 5432,
+      "service": "postgresql",
+      "expected": true,
+      "occupied": true,
+      "status": "in_use"
+    }
+  ],
+  "containers": [
+    {
+      "service_name": "db",
+      "image": "postgres",
+      "tag": "16-alpine",
+      "running_status": "running"
+    }
+  ]
+}
+```
+
+## 2. Fingerprinting & Canonicalization
+
+The `environment_fingerprint` represents the canonical digest of the environment:
+1. **Scope**: Includes `system`, `runtimes`, `dependencies`, `services`, `environment` (variable presence/requirements), `network`, and `containers`.
+2. **Exclusions**: Excludes `git.commit`, `git.dirty`, `runmark.id`, `runmark.created_at`, `runmark.message`, local absolute temporary paths, hostnames, and usernames.
+3. **Ordering**: Unordered collections (e.g. `dependencies`, `services`, `containers`, `network`) are deterministically sorted by their natural primary keys (`name`, `service_name`, `port`).
+4. **Digest**: Computed as `SHA-256(canonical_json_bytes)`.
+
+## 3. Semantic Diffing Rules
+
+Differences between two Runmark states are evaluated with strict classifications and rule-based severity:
+- `CRITICAL`: Missing required runtime, missing required environment variable, stopped mandatory service, major runtime version incompatibility.
+- `WARNING`: Runtime minor version mismatch, service version mismatch, port conflicts, unexpected container status.
+- `INFO`: Dependency patch version changes, dev dependency additions/removals, branch change.
+
+## 4. Verification Exit Codes
+
+The `runmark verify` command yields standard exit codes suitable for CI pipelines:
+- `0`: Verification passed (environment is compliant with baseline/expectations).
+- `1`: Verification failed (critical or warning environment drift detected).
+- `2`: Invalid CLI usage or invalid configuration.
+- `3`: Internal error / detector failure.
+- `4`: Security violation (e.g., attempt to inject or persist unredacted secret).

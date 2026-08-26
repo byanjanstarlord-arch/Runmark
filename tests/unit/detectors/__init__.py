@@ -1,0 +1,1 @@
+"""Detectors unit tests package."""

@@ -1,0 +1,13 @@
+services:
+  api:
+    image: python:3.12
+    ports:
+      - "8000:8000"
+  frontend:
+    image: node:20
+    ports:
+      - "3000:3000"
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
