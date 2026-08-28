@@ -1,5 +1,7 @@
 """CLI commands package."""
 
+from runmark.cli.commands.check import check_command
+from runmark.cli.commands.contract import contract_app
 from runmark.cli.commands.diff import diff_command
 from runmark.cli.commands.doctor import doctor_command
 from runmark.cli.commands.history import history_command
@@ -11,6 +13,8 @@ from runmark.cli.commands.verify import verify_command
 from runmark.cli.commands.version import version_command
 
 __all__ = [
+    "check_command",
+    "contract_app",
     "diff_command",
     "doctor_command",
     "history_command",

@@ -9,8 +9,9 @@ Runmark observes and fingerprints the conditions under which a software project 
 1. **Observe Metadata, Never Collect Secrets**: Runmark inspects configuration metadata (e.g. `present: true`, `secret: true`, `required: true`) and never stores secret values, API keys, private keys, database passwords, or auth tokens.
 2. **Deterministic Redaction**: All detected data passes through a mandatory redaction pipeline before any terminal output, log emission, JSON serialization, or file persistence.
 3. **Export Security Boundary**: Diagnostic exports generated via `runmark share` undergo deep structural sanitization followed by canary pattern scanning. If any credential or secret pattern is detected in the rendered export, generation is immediately aborted with exit code `4` and all temporary files are purged.
-4. **Local-First & Zero Telemetry**: Runmark runs 100% locally on your machine. There is no telemetry, cloud upload, analytics, or remote API interaction.
-5. **Safe Subprocesses Only**: Runmark never executes arbitrary project scripts (`setup.sh`, `Makefile`, `npm install`, `pip install`). Subprocesses are strictly read-only commands with bounded timeouts executed without shell interpolation.
+4. **Contract Security Boundary**: Environment contracts (`runmark.json`) declare requirement names only, never secrets or credentials. `runmark contract init` and `runmark check` scan contracts and candidate data to ensure zero credential contamination (aborting with exit code `4` on violation).
+5. **Local-First & Zero Telemetry**: Runmark runs 100% locally on your machine. There is no telemetry, cloud upload, analytics, or remote API interaction.
+6. **Safe Subprocesses Only**: Runmark never executes arbitrary project scripts (`setup.sh`, `Makefile`, `npm install`, `pip install`). Subprocesses are strictly read-only commands with bounded timeouts executed without shell interpolation.
 
 ## What Runmark Never Stores or Shares
 

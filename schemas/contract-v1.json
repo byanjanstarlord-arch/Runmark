@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runmark.dev/schemas/contract-v1.json",
+  "title": "RunmarkContract",
+  "description": "Formal schema for defining development environment requirements in runmark.json.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Informational URI/path pointing to the contract schema."
+    },
+    "version": {
+      "type": "integer",
+      "enum": [1],
+      "description": "Contract format version (must be 1 for contract-v1)."
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Expected project name."
+        }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Supported operating systems (e.g. ['windows', 'linux', 'darwin'])."
+        },
+        "architecture": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Supported hardware architectures (e.g. ['amd64', 'arm64', 'x86_64'])."
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "description": "Required runtimes mapped to version constraint expressions (e.g. 'python': '3.12.x').",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Required package dependencies categorized by ecosystem.",
+      "additionalProperties": false,
+      "properties": {
+        "python": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "node": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "services": {
+      "type": "object",
+      "description": "Required or optional backing services (e.g. postgresql, redis).",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Version constraint string (defaults to required: true)."
+          },
+          {
+            "type": "object",
+            "required": ["version"],
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "type": "string",
+                "description": "Expected version constraint for the service."
+              },
+              "required": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether the service is mandatory (true) or optional (false)."
+              }
+            }
+          }
+        ]
+      }
+    },
+    "environment": {
+      "type": "object",
+      "description": "Declared environment variable requirements (names only).",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of variable names that must be present."
+        },
+        "optional": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of optional variable names."
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "description": "Network and port requirements.",
+      "additionalProperties": false,
+      "properties": {
+        "ports": {
+          "type": "object",
+          "description": "Mapping of port numbers to network requirement specifications.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "enum": ["tcp", "udp"],
+                "default": "tcp",
+                "description": "Port transport protocol."
+              },
+              "required": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether this port availability is required."
+              }
+            }
+          }
+        }
+      }
+    },
+    "containers": {
+      "type": "object",
+      "description": "Container runtime requirements.",
+      "additionalProperties": false,
+      "properties": {
+        "docker": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "compose": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

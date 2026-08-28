@@ -1,0 +1,39 @@
+{
+  "containers": {},
+  "dependencies": {
+    "node": {},
+    "python": {
+      "pydantic": ">=2.0.0",
+      "pyyaml": ">=6.0.0",
+      "rich": ">=13.0.0",
+      "typer": ">=0.12.0"
+    }
+  },
+  "environment": {
+    "optional": [],
+    "required": []
+  },
+  "network": {
+    "ports": {}
+  },
+  "platform": {
+    "architecture": [
+      "amd64",
+      "arm64",
+      "x86_64"
+    ],
+    "os": [
+      "darwin",
+      "linux",
+      "windows"
+    ]
+  },
+  "project": {
+    "name": "runmark"
+  },
+  "runtime": {
+    "python": ">=3.10"
+  },
+  "services": {},
+  "version": 1
+}

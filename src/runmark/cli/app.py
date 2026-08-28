@@ -4,6 +4,8 @@ import sys
 
 import typer
 
+from runmark.cli.commands.check import check_command
+from runmark.cli.commands.contract import contract_app
 from runmark.cli.commands.diff import diff_command
 from runmark.cli.commands.doctor import doctor_command
 from runmark.cli.commands.history import history_command
@@ -27,6 +29,11 @@ app.command("init", help="Initialize Runmark tracking in the current project.")(
 app.command(
     "scan", help="Inspect and display the complete runtime, dependency, and service state."
 )(scan_command)
+app.command(
+    "check",
+    help="Evaluate whether the host environment satisfies the project environment contract (runmark.json).",
+)(check_command)
+app.add_typer(contract_app)
 app.command(
     "snapshot",
     help="Capture and persist current environment state into an immutable baseline snapshot.",

@@ -45,6 +45,10 @@ class Terminal:
         """Print success message to stdout."""
         self.console.print(f"[bold green]✓[/bold green] {message}")
 
+    def print_warning(self, message: str) -> None:
+        """Print warning message to stdout."""
+        self.console.print(f"[bold yellow]⚠[/bold yellow] {message}")
+
     def print_error(self, message: str) -> None:
         """Print error message to stderr."""
         self.err_console.print(f"[bold red]✗ Error:[/bold red] {message}")

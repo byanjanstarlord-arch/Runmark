@@ -1,5 +1,6 @@
 """Unit tests for MarkdownRenderer."""
 
+from runmark import __version__
 from runmark.models.diagnostic import (
     DiagnosticCategory,
     DiagnosticIssue,
@@ -23,7 +24,7 @@ def _make_test_report(issues=None):
         metadata=ReportMetadata(
             report_id="rpt_md_test123",
             generated_at="2026-08-26T12:00:00Z",
-            runmark_version="0.1.2",
+            runmark_version=__version__,
             schema_version="1.0",
             environment_fingerprint="rm_abcdef123456",
             summary="1 critical issue, 1 warning detected",

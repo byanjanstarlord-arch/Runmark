@@ -82,3 +82,14 @@ When exporting diagnostic reports to Markdown or JSON for external communication
 3. **Pre-Export Canary Secret Scanning**: Scans the rendered Markdown or JSON text immediately prior to file writing or stdout emission.
 4. **Immediate Abort on Contamination (Exit Code 4)**: If any secret pattern is detected in the rendered export, the export aborts instantly with exit code `4`, deletes all temporary files, leaves existing files untouched, and outputs a generic security alert without echoing the secret value.
 
+---
+
+## 7. Contract Security Boundary (`runmark contract init`, `validate`, `check`)
+
+Runmark enforces strict zero-secret guarantees across the entire contract lifecycle:
+
+1. **Requirement-Only Definition**: Contracts declare requirement names and constraints only (e.g. `"required": ["DATABASE_URL"]`), never secrets, API keys, credentials, or values.
+2. **Multi-Pass Sanitizer Scanning**: During `runmark contract init`, `runmark contract validate`, and `runmark check`, `ContractSanitizer` scans canonical contract JSON representations against known secret signatures and canary patterns.
+3. **Fail-Safe Abort (Exit Code 4)**: If unredacted credentials or sensitive tokens are detected in contract candidate data, temporary files are immediately deleted, existing contracts are untouched, and execution halts with exit code `4`.
+
+

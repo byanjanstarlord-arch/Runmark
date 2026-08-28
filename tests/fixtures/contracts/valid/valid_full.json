@@ -1,0 +1,55 @@
+{
+  "$schema": "../../../schemas/contract-v1.json",
+  "version": 1,
+  "project": {
+    "name": "full-stack-api"
+  },
+  "platform": {
+    "os": ["linux", "darwin", "windows"],
+    "architecture": ["x86_64", "arm64", "amd64"]
+  },
+  "runtime": {
+    "python": ">=3.11,<3.13",
+    "node": ">=18"
+  },
+  "dependencies": {
+    "python": {
+      "fastapi": ">=0.100.0",
+      "pydantic": ">=2.0"
+    },
+    "node": {
+      "react": "^18.0.0"
+    }
+  },
+  "services": {
+    "postgresql": {
+      "version": ">=14",
+      "required": true
+    },
+    "redis": ">=6"
+  },
+  "environment": {
+    "required": ["DATABASE_URL", "APP_SECRET_KEY"],
+    "optional": ["DEBUG", "LOG_LEVEL"]
+  },
+  "network": {
+    "ports": {
+      "8000": {
+        "protocol": "tcp",
+        "required": true
+      },
+      "5432": {
+        "protocol": "tcp",
+        "required": false
+      }
+    }
+  },
+  "containers": {
+    "docker": {
+      "required": true
+    },
+    "compose": {
+      "required": true
+    }
+  }
+}

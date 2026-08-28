@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "environment": {
+    "required": ["123_INVALID_NAME"]
+  }
+}

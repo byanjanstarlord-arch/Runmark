@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "runmark"
-version = "0.1.2"
+version = "0.2.1"
 description = "Know what makes your code run. Local-first development environment observability, fingerprinting, comparison, and verification."
 readme = "README.md"
 requires-python = ">=3.10"

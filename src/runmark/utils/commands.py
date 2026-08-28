@@ -4,6 +4,7 @@ import os
 import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 DEFAULT_MAX_OUTPUT_BYTES = 5 * 1024 * 1024  # 5 MB safe memory limit
 
@@ -29,7 +30,7 @@ class CommandResult:
 def safe_run(
     cmd: list[str],
     timeout: float = 5.0,
-    cwd: str | None = None,
+    cwd: Path | str | None = None,
     env: Mapping[str, str] | None = None,
     max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
 ) -> CommandResult:

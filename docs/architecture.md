@@ -108,7 +108,51 @@ RunmarkState + Doctor -> DiagnosticReport
                               ▼
                    [Atomic File Export / Clean stdout]
 ```
-- **DiagnosticReport Model**: Combines report metadata, system/runtime facts, and structured diagnostic issues (`code`, `severity`, `category`, `evidence`, `explanation`, `suggested_action`).
-- **Renderers**: `MarkdownRenderer` produces clean, GitHub-flavored Markdown for issues/PRs; `JSONRenderer` outputs machine-readable JSON.
-- **Export Security Boundary**: `ExportSanitizer` guarantees that no raw credentials, private paths, or internal connection URIs are ever exported.
+### 8. Environment Contracts & Evidence Architecture (`v0.2.0` & `v0.2.1`)
+Runmark provides full contract lifecycle management from project evidence manifests to live runtime proof:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                      Project Manifests                      │
+│   (pyproject.toml, package.json, Dockerfile, compose.yaml)  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      EvidenceCollector                      │
+│  - Signal classification: EXPLICIT > INFERRED > OBSERVED    │
+│  - Strict manifest parsing (PEP 508, npm ranges, compose)   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      ContractGenerator                      │
+│  - Normalizes runtimes, dependencies, services, env, ports  │
+│  - ContractCanonicalizer: deterministic structure & hash    │
+│  - Multi-pass Security Boundary & JSON Schema Validation    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                ┌──────────────┴──────────────┐
+                ▼                             ▼
+   ┌───────────────────────────┐ ┌───────────────────────────┐
+   │    ContractInitService    │ │    ContractDiffService    │
+   │  - Atomic runmark.json    │ │  - Semantic Diff Engine   │
+   │  - --dry-run / --force    │ │  - Git HEAD baseline      │
+   └───────────────────────────┘ └───────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     ContractEvaluator                       │
+│  - Evaluates Live RunmarkState vs Contract Requirements     │
+│  - VersionConstraint matching (numerical, compound ranges)  │
+│  - Produces ContractCheckResult                             │
+│  - Detailed Diagnostic Explanations (--explain mode)        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **EvidenceCollector**: Discovers signals across manifests and classifies them (`EXPLICIT`, `INFERRED`, `OBSERVED`).
+- **ContractGenerator**: Synthesizes a valid, canonical `RunmarkContract` with guaranteed zero secret retention.
+- **ContractDiffEngine**: Computes structured semantic changes (`ADDED`, `REMOVED`, `CHANGED`, `UNCHANGED`) against previous or Git-committed contracts.
+- **ContractEvaluator & Diagnostic Breakdown**: Evaluates compatibility and generates rich diagnostic breakdowns with explicit evidence, causal why explanations, and actionable remediation steps.
+
 

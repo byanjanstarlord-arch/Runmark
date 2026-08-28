@@ -65,3 +65,14 @@ class Detector(ABC):
    - `PortDetector`: Probes standard expected ports (5432, 6379, 8000, 3000, 8080) for occupancy without hanging.
 9. **Containers**:
    - `ContainerDetector`: Safe container and compose inspection.
+
+---
+
+## 10. Evidence Collector Signals & Hierarchies (`v0.2.1`)
+
+In addition to live machine state detectors, Runmark employs an evidence collection engine (`EvidenceCollector`) for project manifests:
+
+- **`EXPLICIT`**: Directly extracted from authoritative project configurations (`pyproject.toml`, `package.json`, `.nvmrc`, `.python-version`, `Dockerfile`, `compose.yaml`, `.env.example`).
+- **`INFERRED`**: Inferred from structural compositions (e.g. Compose database image + application driver dependency).
+- **`OBSERVED`**: Observed host machine facts (used as non-authoritative fallback).
+

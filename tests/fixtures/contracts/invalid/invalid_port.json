@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "network": {
+    "ports": {
+      "99999": {
+        "protocol": "tcp",
+        "required": true
+      }
+    }
+  }
+}

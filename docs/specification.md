@@ -127,7 +127,7 @@ A `DiagnosticReport` synthesizes the environment state with structured diagnosti
   "metadata": {
     "report_id": "rpt_39a1c8f072bd",
     "generated_at": "2026-08-26T12:00:00Z",
-    "runmark_version": "0.1.2",
+    "runmark_version": "0.2.0",
     "schema_version": "1.0",
     "report_format_version": 1,
     "environment_fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -159,3 +159,31 @@ A `DiagnosticReport` synthesizes the environment state with structured diagnosti
   ]
 }
 ```
+
+---
+
+## 6. Environment Contract Specification (`RunmarkContract`)
+
+An Environment Contract (`runmark.json`) formally defines expected platform, runtime, dependency, service, environment, network, and container requirements for a project repository.
+
+```json
+{
+  "$schema": "https://runmark.dev/schemas/contract-v1.json",
+  "version": 1,
+  "project": { "name": "my-service" },
+  "platform": { "os": ["linux", "windows"], "architecture": ["x86_64", "arm64"] },
+  "runtime": { "python": "3.12.x", "node": ">=20" },
+  "dependencies": { "python": { "fastapi": ">=0.100.0" } },
+  "services": { "postgresql": { "version": ">=15", "required": true } },
+  "environment": { "required": ["DATABASE_URL"], "optional": ["DEBUG"] },
+  "network": { "ports": { "8000": { "protocol": "tcp", "required": true } } },
+  "containers": { "docker": { "required": true }, "compose": { "required": true } }
+}
+```
+
+### CLI Verification Exit Codes
+- `0`: Success / Verified / Satisfied
+- `1`: Contract unsatisfied / Drift detected
+- `2`: Missing file / Schema validation failure / Bad arguments
+- `3`: Internal detector failure / Uncaught exception
+- `4`: Security violation / Credential leak detected
