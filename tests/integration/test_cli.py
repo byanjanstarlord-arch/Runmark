@@ -4,6 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+from runmark import __version__
 from runmark.cli.app import app
 
 runner = CliRunner()
@@ -19,7 +20,7 @@ def test_cli_version():
 def test_cli_version_json():
     result = runner.invoke(app, ["version", "--json"])
     assert result.exit_code == 0
-    assert '"tool_version": "0.1.0"' in result.output
+    assert f'"tool_version": "{__version__}"' in result.output
 
 
 def test_cli_scan_json():

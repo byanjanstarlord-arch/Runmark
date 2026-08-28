@@ -1,5 +1,7 @@
 """Output package."""
 
+from runmark.output.json import JSONRenderer
+from runmark.output.markdown import MarkdownRenderer
 from runmark.output.tables import (
     render_diff,
     render_doctor,
@@ -10,6 +12,8 @@ from runmark.output.tables import (
 from runmark.output.terminal import Terminal, term
 
 __all__ = [
+    "JSONRenderer",
+    "MarkdownRenderer",
     "Terminal",
     "render_diff",
     "render_doctor",

@@ -1,13 +1,13 @@
 # Runmark Architecture Guide
 
-This document describes the architectural design and structural layers of Runmark v0.1.
+This document describes the architectural design and structural layers of Runmark v0.1.1.
 
 ## High-Level Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │                           CLI App                           │
-│     (init, scan, snapshot, diff, verify, doctor, version)   │
+│   (init, scan, snapshot, diff, verify, doctor, history, ...)│
 └──────────────────────────────┬──────────────────────────────┘
                                │
                                ▼
@@ -29,14 +29,18 @@ This document describes the architectural design and structural layers of Runmar
 │                 │          │  - Volatile Data Stripping     │
 │ - System        │          │  - Key & List Normalization    │
 │ - Git           │          │  - SHA-256 Fingerprinting      │
-│ - Runtimes      │          │  - Immutable Snapshot Store    │
+│ - Runtimes      │          │  - Atomic Snapshot Storage     │
 │ - Projects      │          └────────────────────────────────┘
 │ - Dependencies  │                           ▲
 │ - Services      │                           │
 │ - Environment   │                           │
 │ - Network/Ports │                  ┌────────────────┐
 │ - Containers    │─────────────────►│Redaction Engine│
-└─────────────────┘                  └────────────────┘
+│                 │                  │- Multi-Pattern │
+│                 │                  │- URL Sanitizer │
+│                 │                  │- Path Privacy  │
+│                 │                  └────────────────┘
+└─────────────────┘
 ```
 
 ## Subsystem Details
@@ -51,22 +55,60 @@ Detector results return a typed `DetectionStatus`:
 - `UNSUPPORTED`: Platform does not support this inspection.
 - `ERROR`: An unexpected exception occurred during detector execution (gracefully isolated without crashing the scan).
 
-### 2. Security & Redaction Pipeline
-Before any detector payload reaches persistence, the terminal, or diff engines, it passes through the Redaction Pipeline:
-1. **Secret Pattern Scanning**: Identifies sensitive environment keys (`*KEY*`, `*SECRET*`, `*TOKEN*`, `*PASSWORD*`, `*PASSWD*`, `*PRIVATE_KEY*`, `AWS_*`, `GITHUB_*`, etc.).
-2. **Value Redaction**: Masks actual secret values into `{"present": true, "secret": true}`.
-3. **URL Sanitization**: Strips basic-auth credentials embedded in Git remote URLs (e.g., `https://user:token@github.com/...` -> `https://github.com/...`).
+### 2. Safe Subprocess Execution
+Subprocesses run under strict security guardrails:
+- `shell=False` enforced across all executions with direct argument lists (`list[str]`).
+- Bounded timeouts (default: 5.0 seconds).
+- Buffer and memory limit clamping (default: 5MB) with truncation markers.
+- Robust exception handling mapping missing executables to exit code `127` and timeouts to `124`.
 
-### 3. Canonicalization & Fingerprinting
-Environment fingerprints must be 100% deterministic:
+### 3. Security & Redaction Pipeline
+Before any detector payload reaches persistence, the terminal, or diff engines, it passes through the Redaction Pipeline:
+1. **Secret Pattern Scanning**: Identifies sensitive environment keys (`*KEY*`, `*SECRET*`, `*TOKEN*`, `*PASSWORD*`, `*PASSWD*`, `*PRIVATE_KEY*`, `AWS_*`, `GITHUB_*`, JWT, Bearer tokens, etc.).
+2. **Value Redaction**: Masks actual secret values into `{"present": true, "secret": true}`.
+3. **URL Sanitization**: Strips credentials across database and web schemes (`postgres://`, `redis://`, `mongodb://`, `mysql://`, `amqp://`, `https://`) and redacts query parameters (`?token=...`, `?key=...`).
+4. **Path Privacy**: Masks user home directories as `<USER_HOME>/...` and normalizes relative project paths.
+
+### 4. Canonicalization & Deterministic Fingerprinting
+Environment fingerprints are 100% deterministic:
 - Volatile fields (current timestamps, execution PIDs, random IDs, local temporary directory paths, and source code Git commits) are stripped from the fingerprint input.
-- Dictionary keys and unordered lists (dependencies, containers, ports) are canonically sorted.
+- Dictionary keys and unordered lists (dependencies, containers, ports) are canonically sorted by primary keys.
 - JSON is serialized with sorted keys and no extraneous whitespace (`separators=(',', ':')`).
 - A SHA-256 digest is generated from the canonical bytes.
 
-### 4. Diff & Doctor Engine
+### 5. Diff & Doctor Engine
 - **Diff Engine**: Performs semantic comparison between baseline and current state, classifying items as `ADDED`, `REMOVED`, `CHANGED`, `UNCHANGED`.
-- **Doctor Engine**: Consumes structured diffs and scan states to synthesize actionable diagnostics (`code`, `severity`, `title`, `evidence`, `explanation`, `suggested_action`).
+- **Doctor Engine**: Consumes structured diffs and scan states to synthesize actionable diagnostics (`code`, `severity`, `title`, `evidence`, `explanation`, `suggested_action`). Maintains strict separation between observed facts (`evidence`), inferred explanations, and read-only remediation advice.
 
-### 5. Storage
-Snapshots are stored as immutable JSON files in `.runmark/snapshots/<snapshot-id>.json`. The most recent snapshot is referenced in `.runmark/current.json`.
+### 6. Atomic Storage Engine
+Snapshots are stored in `.runmark/snapshots/<snapshot-id>.json`.
+- Uses atomic file replacement (`_atomic_write` via temporary file + `os.fsync` + `os.replace`) to prevent corrupted states.
+- The active snapshot pointer is stored atomically in `.runmark/current.json`.
+- Corrupted JSON or schema-incompatible snapshot files are caught safely with structured error handling.
+
+### 7. Export Sanitization & Diagnostic Reporting Subsystem (`v0.1.2`)
+The `Reporter` service coordinates report synthesis and export:
+```text
+RunmarkState + Doctor -> DiagnosticReport
+                              │
+                              ▼
+                   [ExportSanitizer Engine]
+                   - Multi-scheme URI credential stripping
+                   - Deep path normalization (<USER_HOME>, <PROJECT_ROOT>)
+                   - Evidence & diagnostic field scrub
+                              │
+                              ▼
+                   [Markdown / JSON Renderers]
+                              │
+                              ▼
+                   [Pre-Export Security Boundary Scan]
+                   - Zero credential leakage verification
+                   - Immediate abort with exit code 4 on violation
+                              │
+                              ▼
+                   [Atomic File Export / Clean stdout]
+```
+- **DiagnosticReport Model**: Combines report metadata, system/runtime facts, and structured diagnostic issues (`code`, `severity`, `category`, `evidence`, `explanation`, `suggested_action`).
+- **Renderers**: `MarkdownRenderer` produces clean, GitHub-flavored Markdown for issues/PRs; `JSONRenderer` outputs machine-readable JSON.
+- **Export Security Boundary**: `ExportSanitizer` guarantees that no raw credentials, private paths, or internal connection URIs are ever exported.
+

@@ -64,7 +64,12 @@ class SecretRedactor:
                     for item in v
                 ]
             elif isinstance(v, str):
-                sanitized[k] = cls.redact_text(v)
+                if "://" in v:
+                    from runmark.security.sanitizer import Sanitizer
+
+                    sanitized[k] = Sanitizer.sanitize_uri(v)
+                else:
+                    sanitized[k] = cls.redact_text(v)
             else:
                 sanitized[k] = v
         return sanitized

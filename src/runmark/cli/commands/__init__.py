@@ -5,6 +5,7 @@ from runmark.cli.commands.doctor import doctor_command
 from runmark.cli.commands.history import history_command
 from runmark.cli.commands.init import init_command
 from runmark.cli.commands.scan import scan_command
+from runmark.cli.commands.share import share_command
 from runmark.cli.commands.snapshot import snapshot_command
 from runmark.cli.commands.verify import verify_command
 from runmark.cli.commands.version import version_command
@@ -15,6 +16,7 @@ __all__ = [
     "history_command",
     "init_command",
     "scan_command",
+    "share_command",
     "snapshot_command",
     "verify_command",
     "version_command",

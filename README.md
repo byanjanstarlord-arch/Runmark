@@ -5,30 +5,47 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)]()
+[![Type Checked: mypy strict](https://img.shields.io/badge/mypy-strict-blue.svg)]()
+[![Code Style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)]()
 
 ---
 
 ## The Problem
 
 Software frequently fails because the development environment differs between machines:
-- Developer A has Python 3.12, Node 22, PostgreSQL 16, Redis 7, Docker 28, and valid `.env` variables.
-- Developer B has Python 3.11, Node 20, PostgreSQL 17, Redis stopped, and a missing environment variable.
+- **Developer A** has Python 3.12, Node 22, PostgreSQL 16, Redis 7, Docker 28, and valid `.env` variables.
+- **Developer B** has Python 3.11, Node 20, PostgreSQL 17, Redis stopped, and a missing environment variable.
 
 Both developers have the exact same Git repository commit, yet the application breaks.
 
-Git answers questions about source code. Package managers and lockfiles lock application dependencies. Containers reproduce environments. **Runmark is the missing observation, fingerprinting, comparison, verification, and diagnosis layer.**
+Git tracks source code. Package managers lock application dependencies. Containers reproduce environments. **Runmark is the missing observation, fingerprinting, comparison, verification, and diagnosis layer.**
+
+---
+
+## What Runmark Is NOT
+
+To keep expectations clear, Runmark is deliberately focused:
+- **Runmark is NOT a package manager.** It does not replace `pip`, `uv`, `npm`, `pnpm`, or `cargo`.
+- **Runmark is NOT a container manager.** It does not replace `docker`, `podman`, or `k8s`.
+- **Runmark is NOT an AI coding assistant.** It relies on deterministic facts and structural verification.
+- **Runmark is NOT a cloud platform.** It is 100% local-first, offline, and zero-telemetry.
+- **Runmark is NOT an environment installer.** It never automatically installs packages or mutates system state.
+- **Runmark is NOT a replacement for Git or Docker.** It observes and diagnoses what makes your code run alongside them.
 
 ---
 
 ## Key Features
 
+- 📤 **Share & Diagnose**: Generate clean, sanitized, portable Markdown or JSON diagnostic reports (`runmark share`) ready to attach directly to GitHub Issues, Slack, or teammate chats.
+- 🛡️ **Export Security Boundary**: Deep multi-pass sanitization ensures zero URI passwords, credentials, tokens, or local username paths escape in shared reports.
 - 🔍 **Safe Scanning**: Inspects project signals, runtimes (Python, Node, Docker, Git), dependencies, local services (PostgreSQL, Redis), ports, and environment variable requirements.
-- 🔒 **Zero Secret Persistence**: Analyzes variable existence and requirements, but never stores passwords, API keys, private keys, or tokens.
-- 🏷️ **Deterministic Fingerprinting**: Computes a canonical SHA-256 environment fingerprint decoupled from source code commits.
-- ⚡ **Semantic Diffing**: Categorizes drift as `ADDED`, `REMOVED`, `CHANGED` with rule-driven severity (`INFO`, `WARNING`, `CRITICAL`).
+- 🔒 **Zero Secret Retention Guarantee**: Analyzes variable existence, requirement flags, and metadata, but never stores passwords, API keys, private keys, or tokens.
+- 🏷️ **Deterministic Fingerprinting**: Computes a canonical SHA-256 environment fingerprint decoupled from source code commits and timestamps.
+- ⚡ **Semantic Diffing**: Categorizes drift as `ADDED`, `REMOVED`, `CHANGED`, and `UNCHANGED` with rule-driven severity (`INFO`, `WARNING`, `CRITICAL`).
 - 🛡️ **Environment Verification**: Verifies your current machine against a baseline snapshot with CI-ready exit codes (`0`, `1`, `2`, `3`, `4`).
-- 🩺 **Doctor Mode**: Explains environment discrepancies and suggests actionable fixes.
-- 💻 **Local-First**: 100% offline, zero telemetry, no cloud accounts, no AI magic required.
+- 🩺 **Doctor Mode**: Explains environment discrepancies with distinct observed evidence, inferred reasoning, and read-only remediation advice.
+- 💻 **Local-First & Cross-Platform**: 100% offline, cross-platform (Windows, Linux, macOS), atomic filesystem storage, and zero telemetry.
 
 ---
 
@@ -56,75 +73,58 @@ runmark snapshot -m "Initial working dev environment"
 runmark diff
 
 # 5. Verify compliance in CI or on coworker machines
-runmark verify
+runmark verify --strict
 
 # 6. Diagnose and fix discrepancies
 runmark doctor
+
+# 7. Safely share a sanitized diagnostic report with teammates or in a bug report
+runmark share --output report.md
+# Or pipe directly to clipboard / stdout:
+runmark share --stdout
 ```
 
 ---
 
 ## Output Examples
 
-### Scanning an Environment
-```text
-RUNMARK SCAN
+### Sharing a Sanitized Diagnostic Report (`runmark share`)
+```markdown
+# Runmark Diagnostic Report
 
-Project
-✓ Python (pyproject.toml)
-✓ Docker Compose (compose.yaml)
+## Report Information
+| Field | Value |
+|---|---|
+| **Report ID** | `rpt_7f2b10a9c8e1` |
+| **Generated At** | `2026-08-26T12:30:00Z` |
+| **Runmark Version** | `v0.1.2` |
+| **Schema Version** | `1.0` |
+| **Fingerprint** | `rm_33c858105c969ef1...` |
 
-Runtime
-✓ Python 3.12.4
-✓ Node 22.5.1
-✓ Docker 28.0.1
-✓ Git 2.44.0
-
-Services
-✓ PostgreSQL 16 (running on port 5432)
-✓ Redis 7 (running on port 6379)
-
-Environment
-✓ 8 required variables present
-⚠ 1 missing variable (STRIPE_SECRET_KEY)
-
-Git
-✓ branch: main
-✓ commit: a81f29c
-✓ working tree: clean
-```
-
-### Running Doctor
-```text
-RUNMARK DOCTOR
-
-🔴 CRITICAL: Required environment variable missing
-  Variable: STRIPE_SECRET_KEY
-  Expected: present
-  Actual:   missing
-  Action:   Add STRIPE_SECRET_KEY to your local .env or shell environment.
-
-🟡 WARNING: Node.js version mismatch
-  Expected: 22.x
-  Detected: 20.18.0
-  Action:   Switch to Node.js 22.x (e.g. nvm use 22).
+## Diagnostics
+### 🔴 [ENV_MISSING_REQUIRED] Required environment variable missing
+- **Severity**: `CRITICAL`
+- **Category**: `environment`
+- **Explanation**: The project configuration (.env.example) marks 'STRIPE_SECRET_KEY' as required, but it is not set.
+- **Suggested Action**: `Add 'STRIPE_SECRET_KEY' to your local environment or .env file.`
 ```
 
 ---
 
-## Security Philosophy
+## Security & Reliability Guarantees (v0.1.2)
 
 Runmark operates strictly on the rule: **Observe metadata, never collect secrets.**
-- All secret names and sensitive file types are detected and redacted before storage or display.
-- Subprocesses use argument arrays without `shell=True` and have strict timeouts.
-- No arbitrary project scripts (`setup.sh`, `Makefile`, etc.) are ever executed.
+- **Export Security Boundary**: All exported diagnostic reports pass through deep URI credential stripping, path normalization (`<USER_HOME>`, `<PROJECT_ROOT>`), and a final canary secret scan. If any credential survives, export immediately aborts with exit code `4` and deletes temporary files.
+- **Adversarial Secret Redaction**: Multi-stage redactor scrubs API keys, bearer tokens, JWTs, cloud credentials, private keys, and database connection strings before state construction, hashing, or persistence.
+- **Atomic Storage & File Export**: All snapshots, configurations, and shared reports use atomic tempfile replacement (`os.replace` + `fsync`) and overwrite protection (`--force`).
+- **Read-Only Architecture**: Runmark never executes arbitrary project scripts (`setup.sh`, `Makefile`, `npm install`) and never modifies the developer machine.
 
 ---
 
 ## Documentation
 
 - [Architecture Guide](docs/architecture.md)
-- [Specification](docs/specification.md)
+- [Specification & Exit Codes](docs/specification.md)
 - [Security Policy](docs/security.md)
 - [Detectors Guide](docs/detectors.md)
 

@@ -9,6 +9,7 @@ from runmark.cli.commands.doctor import doctor_command
 from runmark.cli.commands.history import history_command
 from runmark.cli.commands.init import init_command
 from runmark.cli.commands.scan import scan_command
+from runmark.cli.commands.share import share_command
 from runmark.cli.commands.snapshot import snapshot_command
 from runmark.cli.commands.verify import verify_command
 from runmark.cli.commands.version import version_command
@@ -39,6 +40,10 @@ app.command("verify", help="Verify current machine environment against a baselin
 app.command(
     "doctor", help="Diagnose environment discrepancies and get actionable remediation advice."
 )(doctor_command)
+app.command(
+    "share",
+    help="Generate a sanitized, portable diagnostic report for sharing with teammates or issues.",
+)(share_command)
 app.command("version", help="Display version and platform diagnostics.")(version_command)
 app.command("history", help="List snapshot history.")(history_command)
 

@@ -41,6 +41,10 @@ class Terminal:
         """Print to standard output."""
         self.console.print(*args, **kwargs)
 
+    def print_success(self, message: str) -> None:
+        """Print success message to stdout."""
+        self.console.print(f"[bold green]✓[/bold green] {message}")
+
     def print_error(self, message: str) -> None:
         """Print error message to stderr."""
         self.err_console.print(f"[bold red]✗ Error:[/bold red] {message}")

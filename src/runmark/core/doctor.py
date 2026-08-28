@@ -1,22 +1,14 @@
 """Doctor diagnostic engine for synthesizing triage issues and actionable fixes."""
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from runmark.core.diff import DiffClassification, DiffSeverity, RunmarkDiff
+from runmark.models.diagnostic import (
+    DiagnosticCategory,
+    DiagnosticIssue,
+    DiagnosticSeverity,
+)
 from runmark.models.runmark import RunmarkState
-
-
-@dataclass
-class DiagnosticIssue:
-    """A structured diagnostic issue identified by Runmark Doctor."""
-
-    code: str
-    severity: DiffSeverity
-    title: str
-    evidence: dict[str, Any]
-    explanation: str
-    suggested_action: str
 
 
 @dataclass
@@ -30,12 +22,12 @@ class DoctorReport:
     @property
     def has_critical(self) -> bool:
         """Whether there are critical diagnostic issues."""
-        return any(i.severity == DiffSeverity.CRITICAL for i in self.issues)
+        return any(i.severity == DiagnosticSeverity.CRITICAL for i in self.issues)
 
     @property
     def has_warnings(self) -> bool:
         """Whether there are warning diagnostic issues."""
-        return any(i.severity == DiffSeverity.WARNING for i in self.issues)
+        return any(i.severity == DiagnosticSeverity.WARNING for i in self.issues)
 
     @property
     def is_healthy(self) -> bool:
@@ -57,7 +49,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="ENV_MISSING_REQUIRED",
-                        severity=DiffSeverity.CRITICAL,
+                        severity=DiagnosticSeverity.CRITICAL,
+                        category=DiagnosticCategory.ENVIRONMENT,
                         title="Required environment variable missing",
                         evidence={
                             "variable": var_name,
@@ -77,7 +70,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="RUNTIME_PYTHON_MISSING",
-                        severity=DiffSeverity.CRITICAL,
+                        severity=DiagnosticSeverity.CRITICAL,
+                        category=DiagnosticCategory.RUNTIME,
                         title="Python runtime missing",
                         evidence={"runtime": "python", "status": "not_found"},
                         explanation="This project contains Python manifests (e.g. pyproject.toml or requirements.txt), but Python is not installed or accessible in PATH.",
@@ -91,7 +85,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="RUNTIME_NODE_MISSING",
-                        severity=DiffSeverity.CRITICAL,
+                        severity=DiagnosticSeverity.CRITICAL,
+                        category=DiagnosticCategory.RUNTIME,
                         title="Node.js runtime missing",
                         evidence={"runtime": "node", "status": "not_found"},
                         explanation="This project contains Node.js manifests (package.json), but Node.js is not installed or accessible in PATH.",
@@ -105,7 +100,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="RUNTIME_DOCKER_MISSING",
-                        severity=DiffSeverity.WARNING,
+                        severity=DiagnosticSeverity.WARNING,
+                        category=DiagnosticCategory.RUNTIME,
                         title="Docker runtime not found",
                         evidence={"runtime": "docker", "status": "not_found"},
                         explanation="This project contains Docker/Compose configuration, but Docker CLI is not installed or accessible.",
@@ -119,7 +115,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code=f"SERVICE_{svc.name.upper()}_STOPPED",
-                        severity=DiffSeverity.WARNING,
+                        severity=DiagnosticSeverity.WARNING,
+                        category=DiagnosticCategory.SERVICE,
                         title=f"{svc.name.capitalize()} service is not running",
                         evidence={
                             "service": svc.name,
@@ -147,11 +144,14 @@ class Doctor:
             if item.classification == DiffClassification.UNCHANGED:
                 continue
 
+            sev = DiagnosticSeverity(item.severity.value)
+
             if item.category == "environment" and item.severity == DiffSeverity.CRITICAL:
                 issues.append(
                     DiagnosticIssue(
                         code="DIFF_ENV_MISSING",
-                        severity=DiffSeverity.CRITICAL,
+                        severity=sev,
+                        category=DiagnosticCategory.ENVIRONMENT,
                         title="Required environment variable missing",
                         evidence={
                             "variable": item.item_name,
@@ -166,7 +166,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="DIFF_RUNTIME_CRITICAL",
-                        severity=DiffSeverity.CRITICAL,
+                        severity=sev,
+                        category=DiagnosticCategory.RUNTIME,
                         title=f"Runtime '{item.item_name}' incompatibility",
                         evidence={
                             "runtime": item.item_name,
@@ -181,7 +182,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="DIFF_RUNTIME_WARNING",
-                        severity=DiffSeverity.WARNING,
+                        severity=sev,
+                        category=DiagnosticCategory.RUNTIME,
                         title=f"Runtime '{item.item_name}' version mismatch",
                         evidence={
                             "runtime": item.item_name,
@@ -199,7 +201,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="DIFF_SERVICE_DISCREPANCY",
-                        severity=item.severity,
+                        severity=sev,
+                        category=DiagnosticCategory.SERVICE,
                         title=f"Service '{item.item_name}' discrepancy",
                         evidence={
                             "service": item.item_name,
@@ -217,7 +220,8 @@ class Doctor:
                 issues.append(
                     DiagnosticIssue(
                         code="DIFF_DEPENDENCY_DRIFT",
-                        severity=item.severity,
+                        severity=sev,
+                        category=DiagnosticCategory.DEPENDENCY,
                         title=f"Dependency '{item.item_name}' drift",
                         evidence={
                             "dependency": item.item_name,

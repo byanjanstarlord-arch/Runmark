@@ -109,11 +109,53 @@ Differences between two Runmark states are evaluated with strict classifications
 - `WARNING`: Runtime minor version mismatch, service version mismatch, port conflicts, unexpected container status.
 - `INFO`: Dependency patch version changes, dev dependency additions/removals, branch change.
 
-## 4. Verification Exit Codes
+## 4. Verification & Share Exit Codes
 
-The `runmark verify` command yields standard exit codes suitable for CI pipelines:
-- `0`: Verification passed (environment is compliant with baseline/expectations).
+The `runmark verify` and `runmark share` commands yield standard exit codes suitable for CI pipelines and automation:
+- `0`: Success (verification passed / report generated cleanly).
 - `1`: Verification failed (critical or warning environment drift detected).
-- `2`: Invalid CLI usage or invalid configuration.
+- `2`: Invalid CLI usage, non-existent path, or file exists without `--force`.
 - `3`: Internal error / detector failure.
-- `4`: Security violation (e.g., attempt to inject or persist unredacted secret).
+- `4`: Security violation (credential contamination detected at export boundary or attempt to persist unredacted secret).
+
+## 5. Diagnostic Report Specification (`DiagnosticReport`)
+
+A `DiagnosticReport` synthesizes the environment state with structured diagnostic issues into a portable artifact:
+
+```json
+{
+  "metadata": {
+    "report_id": "rpt_39a1c8f072bd",
+    "generated_at": "2026-08-26T12:00:00Z",
+    "runmark_version": "0.1.2",
+    "schema_version": "1.0",
+    "report_format_version": 1,
+    "environment_fingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary": "1 critical issue, 1 warning detected"
+  },
+  "project": { ... },
+  "system": { ... },
+  "runtimes": { ... },
+  "dependencies": [ ... ],
+  "services": [ ... ],
+  "environment": { ... },
+  "network": [ ... ],
+  "containers": [ ... ],
+  "git": { ... },
+  "diagnostics": [
+    {
+      "code": "ENV_MISSING_REQUIRED",
+      "severity": "CRITICAL",
+      "category": "environment",
+      "title": "Required environment variable missing",
+      "evidence": {
+        "variable": "DATABASE_URL",
+        "expected": "present",
+        "actual": "missing"
+      },
+      "explanation": "The project configuration marks 'DATABASE_URL' as required, but it is not set.",
+      "suggested_action": "Add 'DATABASE_URL' to your local environment or .env file."
+    }
+  ]
+}
+```

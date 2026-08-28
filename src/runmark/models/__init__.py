@@ -7,6 +7,13 @@ from runmark.models.common import (
 )
 from runmark.models.container import ContainerState
 from runmark.models.dependency import DependencyState
+from runmark.models.diagnostic import (
+    DiagnosticCategory,
+    DiagnosticIssue,
+    DiagnosticReport,
+    DiagnosticSeverity,
+    ReportMetadata,
+)
 from runmark.models.environment import EnvironmentState, EnvironmentVariableState
 from runmark.models.git import GitState
 from runmark.models.network import PortState
@@ -21,11 +28,16 @@ __all__ = [
     "DependencyKind",
     "DependencyState",
     "DetectionStatus",
+    "DiagnosticCategory",
+    "DiagnosticIssue",
+    "DiagnosticReport",
+    "DiagnosticSeverity",
     "EnvironmentState",
     "EnvironmentVariableState",
     "GitState",
     "PortState",
     "ProjectState",
+    "ReportMetadata",
     "RunmarkBaseModel",
     "RunmarkMetadata",
     "RunmarkState",

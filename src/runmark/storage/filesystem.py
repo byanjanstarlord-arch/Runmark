@@ -1,12 +1,37 @@
 """Filesystem storage manager for Runmark snapshots and configuration."""
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from runmark import __schema_version__, __version__
 from runmark.models.runmark import RunmarkState
 from runmark.storage.paths import StoragePaths
+
+
+def _atomic_write(target_path: Path, content: str) -> None:
+    """Safely write string content to target_path using atomic replacement."""
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_fd, temp_path = tempfile.mkstemp(
+        dir=str(target_path.parent),
+        prefix=f".{target_path.name}.",
+        suffix=".tmp",
+    )
+    try:
+        with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, target_path)
+    except Exception:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+        raise
 
 
 class FilesystemStorage:
@@ -38,20 +63,20 @@ class FilesystemStorage:
                 f"[verification]\n"
                 f"strict_versions = false\n"
             )
-            self.paths.config_file.write_text(default_config, encoding="utf-8")
+            _atomic_write(self.paths.config_file, default_config)
 
         return True
 
     def save_snapshot(self, state: RunmarkState, set_as_current: bool = True) -> Path:
-        """Persist a Runmark state snapshot to the filesystem."""
+        """Persist a Runmark state snapshot to the filesystem using atomic writes."""
         self.paths.snapshots_dir.mkdir(parents=True, exist_ok=True)
 
         snapshot_path = self.paths.get_snapshot_path(state.runmark.id)
         content = state.model_dump_json(indent=2)
-        snapshot_path.write_text(content, encoding="utf-8")
+        _atomic_write(snapshot_path, content)
 
         if set_as_current:
-            self.paths.current_file.write_text(content, encoding="utf-8")
+            _atomic_write(self.paths.current_file, content)
 
         return snapshot_path
 
@@ -61,15 +86,24 @@ class FilesystemStorage:
         if not snapshot_path.exists():
             raise FileNotFoundError(f"Snapshot '{snapshot_id}' not found at {snapshot_path}")
 
-        raw_data = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        try:
+            raw_data = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Snapshot '{snapshot_id}' contains corrupted or invalid JSON: {exc}"
+            ) from exc
+
         return RunmarkState.model_validate(raw_data)
 
     def load_current(self) -> RunmarkState | None:
         """Load the current active baseline snapshot."""
         if not self.paths.current_file.exists():
             return None
-        raw_data = json.loads(self.paths.current_file.read_text(encoding="utf-8"))
-        return RunmarkState.model_validate(raw_data)
+        try:
+            raw_data = json.loads(self.paths.current_file.read_text(encoding="utf-8"))
+            return RunmarkState.model_validate(raw_data)
+        except Exception:
+            return None
 
     def list_snapshots(self) -> list[RunmarkState]:
         """List all saved snapshots in chronological order."""

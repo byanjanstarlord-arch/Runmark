@@ -2,7 +2,10 @@
 
 import os
 import subprocess
+from collections.abc import Mapping
 from dataclasses import dataclass
+
+DEFAULT_MAX_OUTPUT_BYTES = 5 * 1024 * 1024  # 5 MB safe memory limit
 
 
 @dataclass(frozen=True)
@@ -15,6 +18,7 @@ class CommandResult:
     stderr: str
     timed_out: bool = False
     not_found: bool = False
+    truncated: bool = False
 
     @property
     def succeeded(self) -> bool:
@@ -26,7 +30,8 @@ def safe_run(
     cmd: list[str],
     timeout: float = 5.0,
     cwd: str | None = None,
-    env: dict | None = None,
+    env: Mapping[str, str] | None = None,
+    max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
 ) -> CommandResult:
     """Execute a command safely using an argument list, bounded timeout, and no shell interpolation.
 
@@ -35,6 +40,7 @@ def safe_run(
         timeout: Maximum seconds to wait.
         cwd: Working directory.
         env: Environment variables override.
+        max_output_bytes: Maximum allowed stdout/stderr bytes before truncation.
 
     Returns:
         CommandResult object.
@@ -49,7 +55,7 @@ def safe_run(
         )
 
     # Use clean environment or inherited env
-    process_env = os.environ.copy() if env is None else env.copy()
+    process_env = dict(os.environ) if env is None else dict(env)
 
     try:
         proc = subprocess.run(
@@ -63,13 +69,27 @@ def safe_run(
             encoding="utf-8",
             errors="replace",
         )
+
+        stdout_raw = proc.stdout
+        stderr_raw = proc.stderr
+        truncated = False
+
+        if len(stdout_raw.encode("utf-8", errors="replace")) > max_output_bytes:
+            stdout_raw = stdout_raw[:max_output_bytes] + "\n[TRUNCATED: Output exceeded size limit]"
+            truncated = True
+
+        if len(stderr_raw.encode("utf-8", errors="replace")) > max_output_bytes:
+            stderr_raw = stderr_raw[:max_output_bytes] + "\n[TRUNCATED: Error exceeded size limit]"
+            truncated = True
+
         return CommandResult(
             command=cmd,
             exit_code=proc.returncode,
-            stdout=proc.stdout.strip(),
-            stderr=proc.stderr.strip(),
+            stdout=stdout_raw.strip(),
+            stderr=stderr_raw.strip(),
             timed_out=False,
             not_found=False,
+            truncated=truncated,
         )
     except FileNotFoundError:
         return CommandResult(
