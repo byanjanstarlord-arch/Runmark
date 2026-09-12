@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "runmark"
-version = "0.2.1"
+version = "0.2.2"
 description = "Know what makes your code run. Local-first development environment observability, fingerprinting, comparison, and verification."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -47,6 +47,9 @@ runmark = "runmark.cli.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+runmark = ["schemas/*.json", "py.typed"]
 
 [tool.ruff]
 line-length = 100

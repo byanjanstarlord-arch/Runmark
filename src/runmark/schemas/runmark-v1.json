@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runmark.dev/schemas/runmark-v1.json",
+  "title": "RunmarkState",
+  "description": "Canonical schema representing the captured state of a software project development environment.",
+  "type": "object",
+  "required": [
+    "runmark",
+    "project",
+    "git",
+    "system",
+    "runtimes",
+    "dependencies",
+    "services",
+    "environment",
+    "network",
+    "containers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "runmark": {
+      "type": "object",
+      "required": ["id", "created_at", "tool_version", "schema_version", "environment_fingerprint"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "tool_version": { "type": "string" },
+        "schema_version": { "type": "string" },
+        "environment_fingerprint": { "type": "string" },
+        "message": { "type": ["string", "null"] }
+      }
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "root", "languages", "frameworks", "package_managers", "containerization"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "root": { "type": "string" },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "frameworks": { "type": "array", "items": { "type": "string" } },
+        "package_managers": { "type": "array", "items": { "type": "string" } },
+        "containerization": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "git": {
+      "type": "object",
+      "required": ["is_repository", "branch", "commit", "dirty"],
+      "additionalProperties": false,
+      "properties": {
+        "is_repository": { "type": "boolean" },
+        "branch": { "type": ["string", "null"] },
+        "commit": { "type": ["string", "null"] },
+        "dirty": { "type": "boolean" }
+      }
+    },
+    "system": {
+      "type": "object",
+      "required": ["os_name", "os_version", "architecture"],
+      "additionalProperties": false,
+      "properties": {
+        "os_name": { "type": "string" },
+        "os_version": { "type": "string" },
+        "architecture": { "type": "string" }
+      }
+    },
+    "runtimes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "installed", "version", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "installed": { "type": "boolean" },
+          "version": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["detected", "not_found", "not_applicable", "unsupported", "error"] },
+          "executable_path": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "manager", "declared", "resolved", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "manager": { "type": "string" },
+          "declared": { "type": ["string", "null"] },
+          "resolved": { "type": ["string", "null"] },
+          "kind": { "type": "string", "enum": ["direct", "transitive", "dev", "peer", "unknown"] }
+        }
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "installed", "running", "detected_version", "expected_version", "status", "port"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "installed": { "type": "boolean" },
+          "running": { "type": "boolean" },
+          "detected_version": { "type": ["string", "null"] },
+          "expected_version": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["detected", "not_found", "not_applicable", "unsupported", "error"] },
+          "port": { "type": ["integer", "null"] }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["variables"],
+      "additionalProperties": false,
+      "properties": {
+        "variables": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["name", "required", "present", "secret", "source"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "required": { "type": "boolean" },
+              "present": { "type": "boolean" },
+              "secret": { "type": "boolean" },
+              "source": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "network": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["port", "service", "expected", "occupied", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "port": { "type": "integer" },
+          "service": { "type": "string" },
+          "expected": { "type": "boolean" },
+          "occupied": { "type": "boolean" },
+          "status": { "type": "string" }
+        }
+      }
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["service_name", "image", "tag", "running_status"],
+        "additionalProperties": false,
+        "properties": {
+          "service_name": { "type": "string" },
+          "image": { "type": "string" },
+          "tag": { "type": ["string", "null"] },
+          "running_status": { "type": "string" }
+        }
+      }
+    }
+  }
+}

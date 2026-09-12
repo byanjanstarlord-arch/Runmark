@@ -10,7 +10,9 @@ import pytest
 from runmark.core.scanner import Scanner
 from runmark.models.runmark import RunmarkState
 
-SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent.parent / "schemas" / "runmark-v1.json"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent.parent / "src" / "runmark" / "schemas" / "runmark-v1.json"
+if not SCHEMA_PATH.exists():
+    SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent.parent / "schemas" / "runmark-v1.json"
 
 
 @pytest.fixture

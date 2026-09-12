@@ -10,7 +10,18 @@ import jsonschema  # type: ignore[import-untyped]
 from runmark.contracts.version_constraints import VersionConstraint
 from runmark.models.contract import RunmarkContract
 
-SCHEMA_FILE = Path(__file__).resolve().parent.parent.parent.parent / "schemas" / "contract-v1.json"
+def _get_schema_file(filename: str = "contract-v1.json") -> Path:
+    """Resolve schema file from package data or repository root."""
+    pkg_schema = Path(__file__).resolve().parent.parent / "schemas" / filename
+    if pkg_schema.exists():
+        return pkg_schema
+    repo_schema = Path(__file__).resolve().parent.parent.parent.parent / "schemas" / filename
+    if repo_schema.exists():
+        return repo_schema
+    return pkg_schema
+
+
+SCHEMA_FILE = _get_schema_file("contract-v1.json")
 
 VALID_OS_NAMES = {"windows", "linux", "darwin", "macos", "freebsd", "openbsd"}
 VALID_ARCHITECTURES = {"amd64", "x86_64", "arm64", "aarch64", "x86", "i386", "i686"}
@@ -30,9 +41,10 @@ class ContractValidator:
     def get_schema(cls) -> dict[str, Any]:
         """Load and cache contract-v1.json schema."""
         if cls._cached_schema is None:
-            if not SCHEMA_FILE.exists():
-                raise FileNotFoundError(f"Schema file not found at: {SCHEMA_FILE}")
-            with open(SCHEMA_FILE, encoding="utf-8") as f:
+            schema_file = _get_schema_file("contract-v1.json")
+            if not schema_file.exists():
+                raise FileNotFoundError(f"Schema file not found at: {schema_file}")
+            with open(schema_file, encoding="utf-8") as f:
                 cls._cached_schema = json.load(f)
         return cls._cached_schema
 
