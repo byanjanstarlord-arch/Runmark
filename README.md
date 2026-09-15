@@ -1,7 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-runmark.png">
-    <img src="assets/logo-runmark.png" alt="Runmark Logo" width="500">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-runmark-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-runmark-light.png">
+    <img src="assets/logo-runmark-dark.png" alt="Runmark Logo" width="500">
   </picture>
 </p>
 
